@@ -1,0 +1,68 @@
+{
+  "token": [
+    "<Canvas Bearer Token>"
+  ],
+  "url": [
+    "<course id value>",
+    "<assignment id value>"
+  ],
+  "options": [
+    "D-ECE-1",
+    "D-ECE-2",
+    "D-ECE-3",
+    "D-ECE-4",
+    "D-ECE-5",
+    "D-ECE-6",
+    "D-ECE-7",
+    "T1",
+    "T2",
+    "T3",
+    "T4",
+    "T5",
+    "T6",
+    "T7",
+    "T8",
+    "A1",
+    "A2"
+  ],
+  "badges":[
+      "Memory capacity, hierarchy, and storage devices",
+      "Digital signal communication, busing and Interfacing",
+      "Processor Performance Metrics, and Benchmarking ",
+      "Instruction Encoding and Datapath design",
+      "Integrated Circuit materials and Fabrication",
+      "Floating-point and numeric intensive acceleration",
+      "In circuit emulation and debugging",
+      "Metrics of Performance and/or SI Units",
+      "Energy Analysis or Conversion",
+      "Computational/Algorithmic Thinking",
+      "Conduct Directed Design Process",
+      "Conduct Open-Ended Design",
+      "Conduct Tradeoff Analysis (A vs B)",
+      "Logic / Operational Flow Analysis",
+      "Engineering Life Cycle (Reliability, Maintainability, Practicality)",
+      "Data/Info Representation",
+      "Tools for Simulation / Emulator / MATLAB"
+  ],
+  "links":[
+      "https://tinyurl.com/memorycap",
+      "https://tinyurl.com/digitalsignalcommun",
+      "https://tinyurl.com/ProcessorPerform",
+      "https://tinyurl.com/datapathdesign",
+      "https://tinyurl.com/integrationfabrication",
+      "https://tinyurl.com/floatingpointintensive",
+      "https://tinyurl.com/circuitemulation",
+      "https://tinyurl.com/MetricsSIUnits",
+      "https://tinyurl.com/Energyanalysisconversion",
+      "https://tinyurl.com/ComputationalThink",
+      "https://tinyurl.com/direct-design",
+      "https://tinyurl.com/Openendeddesign",
+      "https://tinyurl.com/trdoffanalysis",
+      "https://tinyurl.com/operationallogicflow",
+      "https://tinyurl.com/EngineeringLifeCyc",
+      "https://tinyurl.com/DataInfoRep",
+      "https://tinyurl.com/Toolsforsimulation"
+  ]
+}
+
+
