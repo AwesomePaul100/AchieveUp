@@ -30,15 +30,15 @@ def perform_logical_or_operation(file_path, assignment,ids, binary_scores):
     data[i+1].append(0)
   print(data)
   newlist = []
-  # Iterate over the ids and binary_scores arrays
+  # Iterate over the ids and binary_scores arrays.
   for i in range(len(data) - 2):
-    # Find the corresponding student data row
+    # Find the corresponding student data row.
     print("index value: ", len(data))
     for n in range(len(ids)):
       print(data[i+1][0], ids[n])
       if int(data[i+1][0]) == int(ids[n]):
         print("yo", data[i+1][last_column_index + 1], binary_scores[n])
-        # Perform the logical OR operation
+        # Perform the logical OR operation.
         data[i+1][last_column_index + 1] = int(data[i+1][last_column_index]) | int(binary_scores[n])
         print("New value: ", data[i+1][last_column_index + 1])
         break
@@ -66,21 +66,32 @@ def perform_logical_or_operation(file_path, assignment,ids, binary_scores):
 def main(skill, assignment,ids, second_ids, second_binary_values):
   # Generate random IDs
   #ids = generate_random_ids()
-
+  if not os.path.exists('skill_csv'):
+    print("skill_status does not exist.")
+    # Create the folder if it doesn't already exist.
+  try:
+        os.makedirs('skill_csv', exist_ok=True)
+  except OSError as e:
+        print("It could not create folder skill_status")
   # Create initial values for the students
   initial_values = [0] * len(ids)
   # Check if the CSV file exists.
-  file_exists = os.path.isfile(skill + ".csv")
-  # Create the CSV file.
-  if not file_exists:
-    create_csv_file(skill+".csv", ids, initial_values)
-
+  file_exists = os.path.isfile("skill_csv/"+skill + ".csv")
+  
+  if not file_exists and (skill != '' and skill != ' '):
+    # Create the CSV file.
+    print("No file, so we have to create the file.")
+    create_csv_file("skill_csv/"+skill+".csv", ids, initial_values)
   # Take in a second array of IDs (might be less than 5) and corresponding binary values
   #second_ids = [2, 7, 8, 5, 10]
   #second_binary_values = [1, 1, 1, 1, 1]
-
+    
   # Perform logical OR operation for the corresponding ID binary values that are stored in the rightmost column and store the new logical operation output in a new column
-  sum = perform_logical_or_operation(skill+".csv", assignment, second_ids, second_binary_values)
+  if (skill != '' and skill != ' '):
+    sum = perform_logical_or_operation("skill_csv/"+skill+".csv", assignment, second_ids, second_binary_values)
+  else:
+    sum = 0
+    
   return sum
 
 '''if __name__ == "__main__":

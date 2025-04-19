@@ -17,32 +17,53 @@ def modify_string(input_string):
         if char.isdigit():
             return input_string[:i+1]
     return input_string[:15]
+def is_integer(s):
+    try:
+        int(s)
+        return True
+    except ValueError:
+        return False
+        
+def is_int_or_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 # Iterate through the rows and create individual plots for each skill
 for index, row in df.iterrows():
-    if (row['Skills'] != ''):
+    if (row['Skills'] != '' and row['Skills'] != ' ' and row['Skills'] != 'nan'):
         skills = (row['Skills'])
-        print (skills)
+        print("skills: ", skills)
         x_values = []
         y_values = []
-        # Check if there are any percentage values in the row
-        if row.iloc[2:].str.contains('%').any():
-            for col in row.index[1:]:
-                if '%' in str(row[col]):
-                    x_values.append(str(col))
-            #x_values = [str(col) for col in row.index[1:] if '%' in str(row[col])]
-            print ('axis: ', x_values)
-            for col in x_values:
-                y_values.append(float(row[col].rstrip('%')))
-            #y_values = [float(row[col].rstrip('%')) for col in x_values]
-            print ('y values: ',y_values)
-            
-            # Make the x values pretty.
-            counter = 0
-            for val in x_values:
-                print("new value: ", val[:8])
-                x_values[counter] = modify_string(val)
-                counter = counter + 1
+        # Check if there are any percentage values in the row.
+        #print("\nvalue: ",row.iloc[2:])
+        #if row.iloc[2:].str.contains('%').any():
+        for col in row.index[1:]:
+            print("column:", col)
+            print("str(row[col])", str(row[col]))
+            if (is_integer(str(row[col])) or is_int_or_float(str(row[col]))):
+                print(str(row[col]), " is an integer")
+                x_values.append(str(col))
+                y_values.append(float(row[col]))
+        print("sum:", sum(y_values))
+        if (sum(y_values) < 1) or math.isnan(sum(y_values)):
+            continue
+        #x_values = [str(col) for col in row.index[1:] if '%' in str(row[col])]
+        print ('axis: ', x_values)
+        #for col in x_values:
+         #   y_values.append(float(row[col].rstrip('%')))
+        #y_values = [float(row[col].rstrip('%')) for col in x_values]
+        print ('y values: ',y_values)
+        
+        # Make the x values pretty.
+        counter = 0
+        for val in x_values:
+            print("new value: ", val[:8])
+            x_values[counter] = modify_string(val)
+            counter = counter + 1
                 
             
             # Create a plot

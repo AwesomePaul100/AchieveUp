@@ -20,6 +20,11 @@ import numpy as np
 import the_binary
 import math
 import ast
+import time
+
+# A boolean value to identify if the title is too long for Windows.
+title_length = False
+
 
 # List of the skills
 skillsGUI = []
@@ -31,25 +36,22 @@ f = open('data.json')
 
 # returns JSON object as a dictionary
 data = json.load(f)
-
+'''
 # Iterating through the json list
 for i in data['options']:
     print(i)
     skillsGUI.append(i)
-
+'''
 # Send API request to retrive the data from Canvas
 headers ={'Authorization':'Bearer '+data['token'][0]}
 
 ########### Url to extract Quiz questions details
 # We put the url here so the code can just call this value whenever it needs it.
 url = 'https://webcourses.ucf.edu/api/v1/courses/1158000000'+ data['url'][0] +'/quizzes/1158000000'+ data['url'][1]
-
+########### Url to extract course questions details
+url_name = 'https://webcourses.ucf.edu/api/v1/courses/1158000000'+ data['url'][0]
 # Closing file
 f.close()
-
-# List of times each is obtained via student.
-# Must be the same length in pie chart.
-percentskills = [0] * len(skillsGUI)
 
 ########### Url to extract Quiz questions details
 url_quiz_ques = url+'/questions'
@@ -71,17 +73,34 @@ df2 = []
 question_counter = 0
 question_spreadsheet = []
 
+if not os.path.exists('skill_status'):
+    print("skill_status does not exist.")
+    # Create the folder if it doesn't already exist.
+    try:
+        os.makedirs('skill_status', exist_ok=True)
+    except OSError as e:
+        print("It could not create folder skill_status")
+
 # This function reads cells from the questions.csv file (questions_tagged_with_skills).
 def read_cell(x, y):
-    with open(title + '_' + 'questions.csv', 'r', encoding="utf8") as f:
-        reader = csv.reader(f)
-        y_count = 0
-        for n in reader:
-            if y_count == y:
-                cell = n[x]
-                return cell
-            y_count += 1
-
+    if title_length:
+        with open(title[:50] + '_' + 'questions.csv', 'r', encoding="utf8") as f:
+            reader = csv.reader(f)
+            y_count = 0
+            for n in reader:
+                if y_count == y:
+                    cell = n[x]
+                    return cell
+                y_count += 1
+    else:
+        with open(title + '_' + 'questions.csv', 'r', encoding="utf8") as f:
+            reader = csv.reader(f)
+            y_count = 0
+            for n in reader:
+                if y_count == y:
+                    cell = n[x]
+                    return cell
+                y_count += 1
 
 url_quiz_name = url
 r_quiz_name = requests.get(url_quiz_name,headers = headers)
@@ -90,6 +109,53 @@ json_quiz_name_data = json.loads(r_quiz_name.text)
 
 title = json_quiz_name_data['title']
 print(json_quiz_name_data['title'])
+if len(title) > 50:
+    title_length = True
+
+# Let us get the title of course.
+r_course_name = requests.get(url_name,headers = headers)
+print(r_course_name.status_code)
+if r_course_name.status_code != 200:
+    print("\nPlease check the token\n")
+json_course_name_data = json.loads(r_course_name.text)
+
+# The title.
+title_course = json_course_name_data['name']
+print("\nThe course name: ",json_course_name_data['name'])
+title_course = title_course.replace(' ', '_')
+
+# Open the CSV file for reading.
+with open(title_course+'_generated_skills.csv', 'r') as csvfile:
+    reader = csv.DictReader(csvfile)
+
+    # Initialize an empty list to store the results.
+    #result_list = []
+
+    # Iterate over each row in the CSV file.
+    for row in reader:
+        original_value = row['Generative_AI_suggested_skill_list']
+        replaced_value = row['Instructor_refined_skill_list']
+
+        # Check if the "replaced_values" column is not empty.
+        if replaced_value.strip() != "":
+            # If it's not empty, add the value from that column to the result list.
+            skillsGUI.append(replaced_value)
+        else:
+            # If it's empty, add the original value to the result list.
+            skillsGUI.append(original_value)
+
+    # Print the resulting list.
+    print("skillsGUI 1 ",skillsGUI)
+
+#skillsGUI += [" "] * (17 - len(skillsGUI))  # add empty strings to fill up to 17.
+
+#skillsGUI = skillsGUI[:17]  # trim the list to 17 indexes.
+
+print(skillsGUI)
+
+# List of times each is obtained via student.
+# Must be the same length in pie chart.
+percentskills = [0] * len(skillsGUI)
 
 url_quiz_stats = url + '/statistics/?per_page=150'
 r_quiz_stats = requests.get(url_quiz_stats,headers = headers)
@@ -342,8 +408,12 @@ for users in json_users_data:
             if percent >= 95:
                 # We append that skill to the lists of all the skills they got.
                 skills_list.append(skills)
+                #print("\nerror --> ", skills, skills_list)
                 # Add to the percentskills array so that it can be used in pie chart.
                 if skills != '':
+                    print("\nerror --> ", skills)
+                    print("\n index value: ", skillsGUI.index(str(skills)), skillsGUI)
+                    print("\n percentskills: ", percentskills)
                     percentskills[skillsGUI.index(str(skills))] = percentskills[skillsGUI.index(str(skills))] + 1
         print(skills_list)
         # Prepare a list for the rows in the csv file.
@@ -364,7 +434,10 @@ else:
 #print(read_cell(100, 100))
 
 # This outputs the csv file so that it is ready for an instructure to see the skills the student got on the assignment.
-spreadsheet.to_csv('Student_skills_'+json_quiz_name_data['title']+'.csv')
+if title_length:
+    spreadsheet.to_csv('skill_status/Student_skills_'+json_quiz_name_data['title'][:50]+'.csv')
+else:
+    spreadsheet.to_csv('skill_status/Student_skills_'+json_quiz_name_data['title']+'.csv')
 print("The GUI values: ", skillsGUI, percentskills)
 
 # Prior to the spreadsheet.
@@ -397,26 +470,34 @@ if not isExist:
       
     # Create DataFrame
     spreadsheet = pd.DataFrame(data)
-      
+    print("spreadsheet: ",spreadsheet)
+    #time.sleep(10)
     # Print the output.
     spreadsheet.to_csv("Student_Skill_Status.csv")
 
 else:
-    # creating a data frame
+    # Now we create a data frame.
     #skillsGUI.append("yo")
     df = pd.read_csv("Student_Skill_Status.csv")
     print(df.head())
     skill_list = df["Skills"].values.tolist()
-    print(skill_list)
+    print("skill_list: ", skill_list)
+    #time.sleep(10)
     newpercents = len(skill_list) * ['']
-    print("new percents ", newpercents)
+    print("newpercents: ",newpercents)
+    #time.sleep(10)
     thecounter = 0
+    print("skillsGUI: ", skillsGUI)
     for i in skillsGUI:
-        newpercents[skill_list.index(i)] = str(round(((percentskills[thecounter]/Sum) * 100), 2)) + "%"
+        if i != '':
+            newpercents[skill_list.index(i)] = str(round(((percentskills[thecounter]/Sum) * 100), 2)) + "%"
         thecounter +=1
     df[json_quiz_name_data['title']+"new"] = newpercents
+    print("newpercents: ",newpercents)
+    #time.sleep(10)
     for skills in skillsGUI:
         if skills not in skill_list:
+            print("skills not in skill_list: ", skills)
             #skill_list[skill_list.index('')] = skills
             i = 0
             for j in skill_list:
@@ -428,6 +509,8 @@ else:
                 i+=1
             print(skills)
     print(skill_list)
+    print("skill_list: ",skill_list)
+    #time.sleep(10)
     df["Skills"] = skill_list
     #n = (df.columns[1])
     #df.drop(n, axis = 1, inplace = True)
@@ -435,6 +518,8 @@ else:
     print("Printing after the unnamed part ", df.head())
     # Print the output.
     df.to_csv("Student_Skill_Status.csv")
+    print("df: ",df)
+    #time.sleep(10)
     
 ############ASEE-SE###########
 
@@ -487,7 +572,8 @@ else:
         if oprotunity[thecounter] > 0:
             newpercents[skill_list.index(i)] = str(round(((acheived_skills[thecounter]/oprotunity[thecounter]) * 100), 2)) + "%"
         else:
-            newpercents[skill_list.index(i)] = ""
+            if i != '':
+                newpercents[skill_list.index(i)] = ""
         thecounter +=1
     df[json_quiz_name_data['title']+"new"] = newpercents
     for skills in skillsGUI:
@@ -513,10 +599,14 @@ else:
 
 skill_binary = []
 sum_binary = []
-for skill in skill_list:
+for skill in skillsGUI:
     ids = []
     values = []
-    if str(skill) != 'nan':
+    if (str(skill) != 'nan'):
+        print(str(skill))
+        if "/" in str(skill) or "\\" in str(skill):
+            print("there is a / in the string \n")
+            continue
         for student in student_skills:
             ids.append(student[0])
             input_string = str(student[3]).replace("'", "")
@@ -532,7 +622,10 @@ for skill in skill_list:
         print("values: ",values)
         the_sum = the_binary.main(str(skill),str(json_quiz_name_data['title'])[:13], ids, ids, values)
         print("the_binary", the_sum)
+        print("the binary skills: ", skill)
         skill_binary.append(skill)
+        print("the binary skill python list: ", skill_binary)
+        #time.sleep(10)
         sum_binary.append(the_sum)
         #print(student_skills)
 #the_sum = the_binary.main("test_skill",str(json_quiz_name_data['title'])[:13], [1,2,3,4,5,7,8,10], [1,2,3,5,7,8,10], [1,1,1,0,1,0,1])
@@ -548,17 +641,20 @@ print("the file: ", isExist)
 
 if not isExist:
     # Making spreadsheet.
-      
+    print("Student_Skill_Status_ASEE-SE_binary.csv does not exist yet, so we are making it now...")
+    #time.sleep(10)
     # Make a list of 100 cells.
     empty_percentage_list = [0 for x in range(100)]
     empty_skill_list = ['' for x in range(100)]
     
     # Assign data of lists.
     data = {'Skills': skill_binary + empty_skill_list, json_quiz_name_data['title']: sum_binary + empty_percentage_list}
-      
+    print("skill_binary: ",skill_binary)
     # Create DataFrame
     spreadsheet = pd.DataFrame(data)
-      
+    print(data)
+    print(spreadsheet)
+    #time.sleep(10)
     # Print the output.
     spreadsheet.to_csv("Student_Skill_Status_ASEE-SE_binary.csv")
 
@@ -573,7 +669,11 @@ else:
     print("new percents ", newpercents)
     thecounter = 0
     for i in skillsGUI:
-        newpercents[skill_list.index(i)] = str(sum_binary[thecounter])
+        if "/" in str(i) or "\\" in str(i):
+            print("there is a / in the string \n")
+            continue
+        if i != '':
+            newpercents[skill_list.index(i)] = str(sum_binary[thecounter])
         thecounter +=1
     df[json_quiz_name_data['title']+"new"] = newpercents
     for skills in skill_binary:
@@ -640,7 +740,7 @@ legend2 =ax.legend(leastcolor,leastskill,
 ax.add_artist(legend1)
 ax.add_artist(legend2)
           
-plt.savefig(json_quiz_name_data['title']+'.png')
+plt.savefig(json_quiz_name_data['title'][:15]+'.png')
 plt.title(json_quiz_name_data['title'])
 plt.show()
 
